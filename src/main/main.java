@@ -12,8 +12,8 @@ public class main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         
-        DatabaseSetup dbSetup = new DatabaseSetup(conf);
-        dbSetup.createTables();
+//        DatabaseSetup dbSetup = new DatabaseSetup(conf);
+//        dbSetup.createTables();
 
         boolean mainLoop = true;
         while (mainLoop) {
@@ -380,11 +380,15 @@ public class main {
 
     // ===== APPROVE ACCOUNTS =====
     private static void approveAccounts(Scanner sc, String roleToApprove) {
-        // Fetch pending accounts
+        if (conf == null) {
+            System.out.println("❌ Database config not initialized.");
+            return;
+        }
+
         String qry = "SELECT * FROM tbl_accounts WHERE acc_role = ? AND acc_status = 'Pending Approval'";
         List<Map<String, Object>> pending = conf.fetchRecords(qry, roleToApprove);
 
-        if (pending.isEmpty()) {
+        if (pending == null || pending.isEmpty()) {
             System.out.println("No " + roleToApprove + " accounts pending approval.");
             return;
         }
@@ -392,20 +396,23 @@ public class main {
         System.out.println("\nPending " + roleToApprove + " Accounts:");
 
         for (Map<String, Object> acc : pending) {
-            String id = acc.get("acc_id").toString();
-            String name = (String) acc.get("acc_name");
-            String email = (String) acc.get("acc_email");
+            String id = String.valueOf(acc.get("acc_id"));
+            String name = String.valueOf(acc.get("acc_name"));
+            String email = String.valueOf(acc.get("acc_email"));
+
             System.out.println("- " + name + " (ID: " + id + ", Email: " + email + ")");
             System.out.print("Approve this account? (y/n): ");
             String resp = sc.nextLine();
+
             if (resp.equalsIgnoreCase("y")) {
                 String updateQry = "UPDATE tbl_accounts SET acc_status = 'Approved' WHERE acc_id = ?";
                 conf.updateRecord(updateQry, id);
-                System.out.println("" + name + " (" + roleToApprove + ") approved successfully.");
+                System.out.println(name + " (" + roleToApprove + ") approved successfully.");
             } else {
                 System.out.println("Skipped.");
             }
-            System.out.println(); // Spacing
+            System.out.println(); // spacing
         }
     }
+
 }
